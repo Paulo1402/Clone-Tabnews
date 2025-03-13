@@ -37,6 +37,18 @@ export class ServiceError extends BaseError {
   }
 }
 
+export class ValidationError extends BaseError {
+  constructor({ cause, message, action }) {
+    super(message || "Invalid input values", {
+      cause,
+    });
+
+    this.name = "ValidationError";
+    this.action = action || "Check the input values";
+    this.statusCode = 400;
+  }
+}
+
 export class MethodNotAllowedError extends BaseError {
   constructor() {
     super("Method not allowed for this resource");
