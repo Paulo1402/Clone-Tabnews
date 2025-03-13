@@ -11,7 +11,7 @@ async function query(queryObject) {
     return result;
   } catch (error) {
     const serviceErrorObject = new ServiceError({
-      message: "Error on database query",
+      message: "Error on database query or connection",
       cause: error,
     });
     throw serviceErrorObject;
