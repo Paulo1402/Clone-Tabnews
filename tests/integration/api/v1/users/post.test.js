@@ -2,7 +2,6 @@ import { version as uuidVersion } from "uuid";
 import orchestrator from "tests/orchestrator";
 
 beforeAll(async () => {
-  console.log("beforeAll");
   await orchestrator.waitForAllServices();
   await orchestrator.clearDatabase();
   await orchestrator.runPendingMigrations();
