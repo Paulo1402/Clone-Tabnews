@@ -20,7 +20,7 @@ exports.up = (pgm) => {
       unique: true,
     },
 
-    // Why 72 in lenght? See: https://security.stackexchange.com/q/39849
+    // Why 60 in lenght? See: https://www.npmjs.com/package/bcrypt#hash-info
     password: {
       type: "varchar(72)",
       notNull: true,
@@ -29,12 +29,14 @@ exports.up = (pgm) => {
     // Why timestamp with time zone? See: https://justatheory.com/2012/04/postgres-use-timestamptz/
     created_at: {
       type: "timestamptz",
-      default: pgm.func("now()"),
+      notNull: true,
+      default: pgm.func("timezone('utc', now())"),
     },
 
     updated_at: {
       type: "timestamptz",
-      default: pgm.func("now()"),
+      notNull: true,
+      default: pgm.func("timezone('utc', now())"),
     },
   });
 };
