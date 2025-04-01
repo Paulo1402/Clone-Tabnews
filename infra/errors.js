@@ -58,3 +58,13 @@ export class MethodNotAllowedError extends BaseError {
     this.statusCode = 405;
   }
 }
+
+export class NotFoundError extends BaseError {
+  constructor({ cause, message, action }) {
+    super(message || "Resource not found", { cause });
+
+    this.name = "NotFoundError";
+    this.action = action || "Check if the resource exists";
+    this.statusCode = 404;
+  }
+}
