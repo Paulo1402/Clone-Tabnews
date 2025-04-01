@@ -37,6 +37,18 @@ export class ServiceError extends BaseError {
   }
 }
 
+export class ValidationError extends BaseError {
+  constructor({ cause, message, action }) {
+    super(message || "Invalid input values", {
+      cause,
+    });
+
+    this.name = "ValidationError";
+    this.action = action || "Check the input values";
+    this.statusCode = 400;
+  }
+}
+
 export class MethodNotAllowedError extends BaseError {
   constructor() {
     super("Method not allowed for this resource");
@@ -44,5 +56,15 @@ export class MethodNotAllowedError extends BaseError {
     this.name = "MethodNotAllowedError";
     this.action = "Check the API documentation";
     this.statusCode = 405;
+  }
+}
+
+export class NotFoundError extends BaseError {
+  constructor({ cause, message, action }) {
+    super(message || "Resource not found", { cause });
+
+    this.name = "NotFoundError";
+    this.action = action || "Check if the resource exists";
+    this.statusCode = 404;
   }
 }
