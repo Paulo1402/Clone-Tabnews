@@ -68,3 +68,13 @@ export class NotFoundError extends BaseError {
     this.statusCode = 404;
   }
 }
+
+export class UnauthorizedError extends BaseError {
+  constructor({ cause, message, action }) {
+    super(message || "User not authorized", { cause });
+
+    this.name = "UnauthorizedError";
+    this.action = action || "Authenticate to access this resource";
+    this.statusCode = 401;
+  }
+}
