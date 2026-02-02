@@ -1,4 +1,6 @@
+import { version as uuidVersion } from "uuid";
 import orchestrator from "tests/orchestrator";
+import session from "models/session";
 
 beforeAll(async () => {
   await orchestrator.waitForAllServices();
@@ -88,6 +90,52 @@ describe("POST /api/v1/sessions", () => {
         action: "Check your credentials and try again",
         status_code: 401,
       });
+    });
+
+    test("With correct 'email' and correct 'password'", async () => {
+      const createdUser = await orchestrator.createUser({
+        email: "correct-email2@example.com",
+        password: "correct-password",
+      });
+
+      const response = await fetch("http://localhost:3000/api/v1/sessions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: "correct-email2@example.com",
+          password: "correct-password",
+        }),
+      });
+
+      expect(response.status).toBe(201);
+
+      const responseBody = await response.json();
+
+      expect(responseBody).toEqual({
+        id: responseBody.id,
+        token: responseBody.token,
+        user_id: createdUser.id,
+        expires_at: responseBody.expires_at,
+        created_at: responseBody.created_at,
+        updated_at: responseBody.updated_at,
+      });
+
+      expect(uuidVersion(responseBody.id)).toBe(4);
+      expect(Date.parse(responseBody.expires_at)).not.toBeNaN();
+      expect(Date.parse(responseBody.created_at)).not.toBeNaN();
+      expect(Date.parse(responseBody.updated_at)).not.toBeNaN();
+
+      const expiresAt = new Date(responseBody.expires_at);
+      const createdAt = new Date(responseBody.created_at);
+
+      const expirationTimeMilliseconds = expiresAt - createdAt;
+
+      // Check if expiration is close to the expected expiration time (within 1 second)
+      expect(
+        session.EXPIRATION_IN_MILLISECONDS - expirationTimeMilliseconds,
+      ).toBeLessThan(1000);
     });
   });
 });
