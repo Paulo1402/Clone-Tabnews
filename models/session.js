@@ -68,7 +68,7 @@ async function renew(sessionId) {
           sessions
         SET
           expires_at = $2,
-          updated_at = NOW()
+          updated_at = timezone('utc', now())
         WHERE
           id = $1
         RETURNING
@@ -76,6 +76,13 @@ async function renew(sessionId) {
       `,
       values: [sessionId, expiresAt],
     });
+
+    if (results.rowCount == 0) {
+      throw new UnauthorizedError({
+        message: "Invalid session token.",
+        action: "Please log in to obtain a valid session token.",
+      });
+    }
 
     return results.rows[0];
   }
