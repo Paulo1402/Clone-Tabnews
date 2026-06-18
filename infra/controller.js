@@ -63,7 +63,7 @@ function clearSessionCookie(response) {
 }
 
 async function injectAnonymousOrUser(request, response, next) {
-  if (request.cookies?.sessions_id) {
+  if (request.cookies?.session_id) {
     await injectAuthenticatedUser(request);
   } else {
     injectAnonymousUser(request);
