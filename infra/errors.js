@@ -78,3 +78,13 @@ export class UnauthorizedError extends BaseError {
     this.statusCode = 401;
   }
 }
+
+export class ForbiddenError extends BaseError {
+  constructor({ cause, message, action }) {
+    super(message || "Access forbidden", { cause });
+
+    this.name = "ForbiddenError";
+    this.action = action || "Check your permissions";
+    this.statusCode = 403;
+  }
+}
