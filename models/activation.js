@@ -2,7 +2,8 @@ import email from "infra/email";
 import database from "infra/database";
 import webserver from "infra/webserver";
 import user from "models/user";
-import { NotFoundError } from "infra/errors";
+import { ForbiddenError, NotFoundError } from "infra/errors";
+import authorization from "./authorization";
 
 const EXPIRATION_TIME_IN_MILLISECONDS = 60 * 15 * 1000; // 15 minutes
 
@@ -87,7 +88,20 @@ async function markTokenAsUsed(activationTokenId) {
 }
 
 async function activateUserByUserId(userId) {
-  const activatedUser = await user.setFeatures(userId, ["create:session"]);
+  const userToActivate = await user.findOneById(userId);
+
+  if (!authorization.can(userToActivate, "read:activation_token")) {
+    throw new ForbiddenError({
+      message: "User does not have the required feature to activate account",
+      action: "Please contact support to resolve this issue",
+    });
+  }
+
+  const activatedUser = await user.setFeatures(userId, [
+    "create:session",
+    "read:session",
+  ]);
+
   return activatedUser;
 }
 
@@ -115,6 +129,7 @@ The Tabnews Team
 }
 
 const activation = {
+  EXPIRATION_TIME_IN_MILLISECONDS,
   findOneValidById,
   create,
   markTokenAsUsed,
