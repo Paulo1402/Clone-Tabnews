@@ -9,6 +9,7 @@ class BaseError extends Error {
       message: this.message,
       action: this.action,
       status_code: this.statusCode,
+      context: this.context,
     };
   }
 }
@@ -26,14 +27,15 @@ export class InternalServerError extends BaseError {
 }
 
 export class ServiceError extends BaseError {
-  constructor({ cause, message }) {
+  constructor({ cause, message, action, context }) {
     super(message || "Service not available at the moment", {
       cause,
     });
 
     this.name = "ServiceError";
-    this.action = "Try again later";
+    this.action = action || "Try again later";
     this.statusCode = 503;
+    this.context = context;
   }
 }
 
