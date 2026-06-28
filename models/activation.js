@@ -122,7 +122,7 @@ The Tabnews Team
 `;
 
   await email.send({
-    from: "<contato@tabnews.com>",
+    from: "<contato@clone-tabnews.paulobenatto.dev.br>",
     to: user.email,
     subject: "Activate your account",
     text: msg.trim(),
