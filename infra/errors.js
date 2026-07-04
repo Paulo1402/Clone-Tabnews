@@ -9,6 +9,7 @@ class BaseError extends Error {
       message: this.message,
       action: this.action,
       status_code: this.statusCode,
+      context: this.context,
     };
   }
 }
@@ -26,14 +27,15 @@ export class InternalServerError extends BaseError {
 }
 
 export class ServiceError extends BaseError {
-  constructor({ cause, message }) {
+  constructor({ cause, message, action, context }) {
     super(message || "Service not available at the moment", {
       cause,
     });
 
     this.name = "ServiceError";
-    this.action = "Try again later";
+    this.action = action || "Try again later";
     this.statusCode = 503;
+    this.context = context;
   }
 }
 
@@ -76,5 +78,15 @@ export class UnauthorizedError extends BaseError {
     this.name = "UnauthorizedError";
     this.action = action || "Authenticate to access this resource";
     this.statusCode = 401;
+  }
+}
+
+export class ForbiddenError extends BaseError {
+  constructor({ cause, message, action }) {
+    super(message || "Access forbidden", { cause });
+
+    this.name = "ForbiddenError";
+    this.action = action || "Check your permissions";
+    this.statusCode = 403;
   }
 }
