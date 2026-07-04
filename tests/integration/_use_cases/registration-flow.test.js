@@ -16,20 +16,17 @@ describe("Use case: Registration Flow (all successful)", () => {
   let createSessionsResponseBody;
 
   test("Create user account", async () => {
-    const createUserResponse = await fetch(
-      "http://localhost:3000/api/v1/users",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: "registration_flow_test_user",
-          email: "registration_flow_test_user@example.com",
-          password: "registration_flow_test_password",
-        }),
+    const createUserResponse = await fetch(`${webserver.origin}/api/v1/users`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify({
+        username: "registration_flow_test_user",
+        email: "registration_flow_test_user@example.com",
+        password: "registration_flow_test_password",
+      }),
+    });
 
     expect(createUserResponse.status).toBe(201);
 
@@ -71,7 +68,7 @@ describe("Use case: Registration Flow (all successful)", () => {
 
   test("Activate account", async () => {
     const activationResponse = await fetch(
-      `http://localhost:3000/api/v1/activations/${activationTokenId}`,
+      `${webserver.origin}/api/v1/activations/${activationTokenId}`,
       {
         method: "PATCH",
       },
@@ -95,7 +92,7 @@ describe("Use case: Registration Flow (all successful)", () => {
 
   test("Login with activated account", async () => {
     const createSessionsResponse = await fetch(
-      "http://localhost:3000/api/v1/sessions",
+      `${webserver.origin}/api/v1/sessions`,
       {
         method: "POST",
         headers: {
@@ -116,7 +113,7 @@ describe("Use case: Registration Flow (all successful)", () => {
   });
 
   test("Get user information", async () => {
-    const userResponse = await fetch("http://localhost:3000/api/v1/user", {
+    const userResponse = await fetch(`${webserver.origin}/api/v1/user`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

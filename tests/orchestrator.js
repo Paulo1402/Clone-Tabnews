@@ -1,11 +1,11 @@
 import retry from "async-retry";
 import { faker } from "@faker-js/faker";
-
-import database from "infra/database.js";
-import migrator from "models/migrator.js";
-import user from "models/user.js";
-import session from "models/session.js";
+import database from "infra/database";
+import migrator from "models/migrator";
+import user from "models/user";
+import session from "models/session";
 import activation from "models/activation";
+import webserver from "infra/webserver";
 
 const emailHttpUrl = `http://${process.env.EMAIL_HTTP_HOST}:${process.env.EMAIL_HTTP_PORT}`;
 
@@ -14,7 +14,7 @@ async function waitForAllServices() {
     return retry(fetchStatusPage, { retries: 100, maxTimeout: 1000 });
 
     async function fetchStatusPage() {
-      const response = await fetch("http://localhost:3000/api/v1/status");
+      const response = await fetch(`${webserver.origin}/api/v1/status`);
 
       if (response.status !== 200) {
         throw new Error(`Status page returned ${response.status}`);
