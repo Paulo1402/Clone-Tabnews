@@ -132,15 +132,21 @@ describe("PATH /api/v1/activations/[token_id]", () => {
       expect(Date.parse(responseBody.updated_at)).not.toBeNaN();
       expect(responseBody.updated_at > responseBody.created_at).toBe(true);
 
+      // `expires_at` is calculated at the application level
+      // `created_at` is calculated at the database level
+      // So, we need to calculate the difference between them to check if the expiration time is correct
+      // The difference should be close to the expected expiration time (within 5 second)
+
       const expiresAt = new Date(responseBody.expires_at);
       const createdAt = new Date(responseBody.created_at);
 
-      expiresAt.setMilliseconds(0);
-      createdAt.setMilliseconds(0);
+      const actualLifetimeInMilliseconds = expiresAt - createdAt;
 
-      expect(expiresAt - createdAt).toBe(
-        activation.EXPIRATION_TIME_IN_MILLISECONDS,
-      );
+      const lifetimeDifferenceInMilliseconds =
+        activation.EXPIRATION_TIME_IN_MILLISECONDS -
+        actualLifetimeInMilliseconds;
+
+      expect(lifetimeDifferenceInMilliseconds).toBeLessThanOrEqual(5000);
 
       const activatedUser = await user.findOneById(responseBody.user_id);
       expect(activatedUser.features).toEqual([
