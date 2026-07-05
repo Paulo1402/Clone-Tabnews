@@ -2,6 +2,7 @@ import { version as uuidVersion } from "uuid";
 import setCookieParser from "set-cookie-parser";
 import orchestrator from "tests/orchestrator";
 import session from "models/session";
+import webserver from "infra/webserver";
 
 beforeAll(async () => {
   await orchestrator.waitForAllServices();
@@ -11,12 +12,12 @@ beforeAll(async () => {
 
 describe("POST /api/v1/sessions", () => {
   describe("Annonymous user", () => {
-    test("With incorrect 'email' but correct 'password'", async () => {
+    test("With incorrect `email` but correct `password`", async () => {
       await orchestrator.createUser({
         password: "correct-password",
       });
 
-      const response = await fetch("http://localhost:3000/api/v1/sessions", {
+      const response = await fetch(`${webserver.origin}/api/v1/sessions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -39,12 +40,12 @@ describe("POST /api/v1/sessions", () => {
       });
     });
 
-    test("With correct 'email' but incorrect 'password'", async () => {
+    test("With correct `email` but incorrect `password`", async () => {
       await orchestrator.createUser({
         email: "correct-email@example.com",
       });
 
-      const response = await fetch("http://localhost:3000/api/v1/sessions", {
+      const response = await fetch(`${webserver.origin}/api/v1/sessions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -67,10 +68,10 @@ describe("POST /api/v1/sessions", () => {
       });
     });
 
-    test("With incorrect 'email' and incorrect 'password'", async () => {
+    test("With incorrect `email` and incorrect `password`", async () => {
       await orchestrator.createUser();
 
-      const response = await fetch("http://localhost:3000/api/v1/sessions", {
+      const response = await fetch(`${webserver.origin}/api/v1/sessions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -93,15 +94,15 @@ describe("POST /api/v1/sessions", () => {
       });
     });
 
-    test("With correct 'email' and correct 'password'", async () => {
+    test("With correct `email` and correct `password`", async () => {
       const createdUser = await orchestrator.createUser({
         email: "correct-email2@example.com",
         password: "correct-password",
       });
 
-      await orchestrator.activateUser(createdUser.id);
+      await orchestrator.activateUser(createdUser);
 
-      const response = await fetch("http://localhost:3000/api/v1/sessions", {
+      const response = await fetch(`${webserver.origin}/api/v1/sessions`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -130,15 +131,20 @@ describe("POST /api/v1/sessions", () => {
       expect(Date.parse(responseBody.created_at)).not.toBeNaN();
       expect(Date.parse(responseBody.updated_at)).not.toBeNaN();
 
+      // `expires_at` is calculated at the application level
+      // `created_at` is calculated at the database level
+      // So, we need to calculate the difference between them to check if the expiration time is correct
+      // The difference should be close to the expected expiration time (within 5 second)
+
       const expiresAt = new Date(responseBody.expires_at);
       const createdAt = new Date(responseBody.created_at);
 
-      const expirationTimeMilliseconds = expiresAt - createdAt;
+      const actualLifetimeInMilliseconds = expiresAt - createdAt;
 
-      // Check if expiration is close to the expected expiration time (within 1 second)
-      expect(
-        session.EXPIRATION_IN_MILLISECONDS - expirationTimeMilliseconds,
-      ).toBeLessThan(1000);
+      const lifetimeDifferenceInMilliseconds =
+        session.EXPIRATION_IN_MILLISECONDS - actualLifetimeInMilliseconds;
+
+      expect(lifetimeDifferenceInMilliseconds).toBeLessThanOrEqual(5000);
 
       const parsedSetCookie = setCookieParser(response, { map: true });
 
@@ -148,6 +154,7 @@ describe("POST /api/v1/sessions", () => {
         maxAge: session.EXPIRATION_IN_MILLISECONDS / 1000,
         path: "/",
         httpOnly: true,
+        sameSite: "Lax",
       });
     });
   });

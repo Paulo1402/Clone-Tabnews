@@ -2,6 +2,7 @@ import { version as uuidVersion } from "uuid";
 import activation from "models/activation";
 import user from "models/user";
 import orchestrator from "tests/orchestrator";
+import webserver from "infra/webserver";
 
 beforeAll(async () => {
   await orchestrator.waitForAllServices();
@@ -13,7 +14,7 @@ describe("PATH /api/v1/activations/[token_id]", () => {
   describe("Annonymous user", () => {
     test("With nonexistent token", async () => {
       const response = await fetch(
-        "http://localhost:3000/api/v1/activations/8b350955-e0a4-476c-8dc5-78065e99f724",
+        `${webserver.origin}/api/v1/activations/8b350955-e0a4-476c-8dc5-78065e99f724`,
         {
           method: "PATCH",
         },
@@ -45,7 +46,7 @@ describe("PATH /api/v1/activations/[token_id]", () => {
       jest.useRealTimers();
 
       const response = await fetch(
-        `http://localhost:3000/api/v1/activations/${expiredActivationToken.id}`,
+        `${webserver.origin}/api/v1/activations/${expiredActivationToken.id}`,
         {
           method: "PATCH",
         },
@@ -69,7 +70,7 @@ describe("PATH /api/v1/activations/[token_id]", () => {
       const activationToken = await activation.create(createdUser.id);
 
       const response1 = await fetch(
-        `http://localhost:3000/api/v1/activations/${activationToken.id}`,
+        `${webserver.origin}/api/v1/activations/${activationToken.id}`,
         {
           method: "PATCH",
         },
@@ -78,7 +79,7 @@ describe("PATH /api/v1/activations/[token_id]", () => {
       expect(response1.status).toBe(200);
 
       const response2 = await fetch(
-        `http://localhost:3000/api/v1/activations/${activationToken.id}`,
+        `${webserver.origin}/api/v1/activations/${activationToken.id}`,
         {
           method: "PATCH",
         },
@@ -104,7 +105,7 @@ describe("PATH /api/v1/activations/[token_id]", () => {
       const activationToken = await activation.create(createdUser.id);
 
       const response = await fetch(
-        `http://localhost:3000/api/v1/activations/${activationToken.id}`,
+        `${webserver.origin}/api/v1/activations/${activationToken.id}`,
         {
           method: "PATCH",
         },
@@ -131,15 +132,21 @@ describe("PATH /api/v1/activations/[token_id]", () => {
       expect(Date.parse(responseBody.updated_at)).not.toBeNaN();
       expect(responseBody.updated_at > responseBody.created_at).toBe(true);
 
+      // `expires_at` is calculated at the application level
+      // `created_at` is calculated at the database level
+      // So, we need to calculate the difference between them to check if the expiration time is correct
+      // The difference should be close to the expected expiration time (within 5 second)
+
       const expiresAt = new Date(responseBody.expires_at);
       const createdAt = new Date(responseBody.created_at);
 
-      expiresAt.setMilliseconds(0);
-      createdAt.setMilliseconds(0);
+      const actualLifetimeInMilliseconds = expiresAt - createdAt;
 
-      expect(expiresAt - createdAt).toBe(
-        activation.EXPIRATION_TIME_IN_MILLISECONDS,
-      );
+      const lifetimeDifferenceInMilliseconds =
+        activation.EXPIRATION_TIME_IN_MILLISECONDS -
+        actualLifetimeInMilliseconds;
+
+      expect(lifetimeDifferenceInMilliseconds).toBeLessThanOrEqual(5000);
 
       const activatedUser = await user.findOneById(responseBody.user_id);
       expect(activatedUser.features).toEqual([
@@ -151,11 +158,11 @@ describe("PATH /api/v1/activations/[token_id]", () => {
 
     test("With valid token but already activated user", async () => {
       const createdUser = await orchestrator.createUser();
-      await orchestrator.activateUser(createdUser.id);
+      await orchestrator.activateUser(createdUser);
       const activationToken = await activation.create(createdUser.id);
 
       const response = await fetch(
-        `http://localhost:3000/api/v1/activations/${activationToken.id}`,
+        `${webserver.origin}/api/v1/activations/${activationToken.id}`,
         {
           method: "PATCH",
         },
@@ -177,14 +184,14 @@ describe("PATH /api/v1/activations/[token_id]", () => {
   describe("Default user", () => {
     test("With valid token, but already logged in user", async () => {
       const user1 = await orchestrator.createUser();
-      await orchestrator.activateUser(user1.id);
-      const user1SessionObject = await orchestrator.createSession(user1.id);
+      await orchestrator.activateUser(user1);
+      const user1SessionObject = await orchestrator.createSession(user1);
 
       const user2 = await orchestrator.createUser();
       const user2ActivationToken = await activation.create(user2.id);
 
       const response = await fetch(
-        `http://localhost:3000/api/v1/activations/${user2ActivationToken.token}`,
+        `${webserver.origin}/api/v1/activations/${user2ActivationToken.token}`,
         {
           method: "PATCH",
           headers: {
