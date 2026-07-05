@@ -50,7 +50,7 @@ describe("GET /api/v1/status", () => {
   });
 
   describe("Privileged user", () => {
-    test("With 'read:status:all'", async () => {
+    test("With `read:status:all`", async () => {
       const createdUser = await orchestrator.createUser();
       const activatedUser = await orchestrator.activateUser(createdUser);
       const sessionObject = await orchestrator.createSession(activatedUser);

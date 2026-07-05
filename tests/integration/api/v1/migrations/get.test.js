@@ -49,7 +49,7 @@ describe("GET /api/v1/migrations", () => {
   });
 
   describe("Privilegied user", () => {
-    test("With 'read:migration'", async () => {
+    test("With `read:migration`", async () => {
       const createdUser = await orchestrator.createUser();
       const activatedUser = await orchestrator.activateUser(createdUser);
       const sessionObject = await orchestrator.createSession(activatedUser);
