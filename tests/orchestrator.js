@@ -55,8 +55,8 @@ async function createUser(userObject) {
   });
 }
 
-async function createSession(userId) {
-  return await session.create(userId);
+async function createSession(userObject) {
+  return await session.create(userObject.id);
 }
 
 async function deleteAllEmails() {
@@ -89,13 +89,13 @@ function extractUUID(text) {
   return match ? match[0] : null;
 }
 
-async function activateUser(userId) {
-  const activatedUser = await activation.activateUserByUserId(userId);
+async function activateUser(inactiveUser) {
+  const activatedUser = await activation.activateUserByUserId(inactiveUser.id);
   return activatedUser;
 }
 
-async function addFeaturesToUser(userId, features) {
-  const updatedUser = await user.addFeatures(userId, features);
+async function addFeaturesToUser(userObject, features) {
+  const updatedUser = await user.addFeatures(userObject.id, features);
   return updatedUser;
 }
 
